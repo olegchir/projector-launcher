@@ -1,46 +1,48 @@
 plugins {
-    id 'org.jetbrains.kotlin.js' version "$kotlin_version"
+    id 'org.jetbrains.kotlin.multiplatform' version "$kotlin_version"
 }
 
 group 'com.jetbrains.projector'
 version '1.0.0'
 
-dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
-    // Doesn't work for some totally unknown reason
-    // implementation npm("electron", "$electron_version")
-    implementation npm("electron", "^10.1.2")
-}
-
 kotlin {
+    sourceSets {
+        jsMain {
+            kotlin.srcDir('src/main')
+            dependencies {
+                implementation npm("electron", "$electron_version")
+                implementation "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
+            }
+        }
+    }
     js {
         nodejs {
-            sourceSets {
-                commonMain {
-                    kotlin.srcDir('src/main')
-                }
-            }
             compilations.all {
                 kotlinOptions {
-                    // You can comment out the following line,
-                    // and then you should run "npm run startx" instead of "npm run start"
-                    kotlinOptions.outputFile = "${projectDir}/../dist/build/app.js"
+                    // Uncomment this to chenge output directory
+                    // This will definitely break the build
+                    // kotlinOptions.outputFile = "${projectDir}/../dist/build/app.js"
 
-                    // I believe that Electron use CommonJS
-                    // kotlinOptions.moduleKind = "umd"
-                    kotlinOptions.moduleKind = "commonjs"
+                    kotlinOptions.moduleKind = "umd"
+                    // Electron use CommonJS
+                    // Uncomment this for running with externals = true
+                    //kotlinOptions.moduleKind = "commonjs"
 
                     kotlinOptions.sourceMap = true
                     kotlinOptions.sourceMapEmbedSources = "always"
-                    //kotlinOptions.main = "call"
+                    kotlinOptions.metaInfo = true
+                    kotlinOptions.main = "call"
                 }
             }
         }
     }
 }
 
-// Who needs tests anyway?
-tasks.named("nodeTest") {
+//// Who needs tests anyway?
+tasks.named("jsNodeTest") {
     enabled = false
 }
-tasks.withType(Test) {enabled = false}
+//tasks.named("nodeTest") {
+//    enabled = false
+//}
+//tasks.withType(Test) {enabled = false}
