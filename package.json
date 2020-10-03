@@ -1,0 +1,24 @@
+{
+  "name": "projector-launcher",
+  "version": "1.0.0",
+  "description": "Desktop launcher for Projector, written in Kotlin, Electron and Node",
+  "main": "backend/server/app.js",
+  "scripts": {
+    "start": "./gradlew build; node dist/build/app.js",
+    "build": "./gradlew build",
+    "run": "node dist/build/app.js",
+    "runx": "node projector-launcher/build/js/packages/projector-launcher-electron/kotlin/projector-launcher-electron.js"
+  },
+  "keywords": [
+    "projector",
+    "jetbrains",
+    "kotlin",
+    "kotlin-js"
+  ],
+  "author": "projector",
+  "license": "MIT",
+  "dependencies": {
+    "kotlin": "^1.4.10"
+  },
+  "devDependencies": {}
+}

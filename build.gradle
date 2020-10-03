@@ -1,0 +1,24 @@
+group 'com.jetbrains.projector'
+version '1.0.0'
+
+subprojects { p ->
+    ext.kotlin_version = "1.4.10"
+    ext.html_version = "0.7.1"
+    ext.electron_version = "^10.1.2"
+
+    repositories {
+        mavenLocal()
+        jcenter()
+        maven { url "https://dl.bintray.com/kotlin/kotlinx.html" }
+    }
+
+    p.buildscript {
+        ext.kotlin_version = "1.4.10"
+
+        repositories {
+            mavenLocal()
+            jcenter()
+            maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
+        }
+    }
+}
