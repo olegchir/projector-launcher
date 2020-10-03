@@ -5,6 +5,7 @@ subprojects { p ->
     ext.kotlin_version = "1.4.10"
     ext.html_version = "0.7.1"
     ext.electron_version = "^10.1.2"
+    ext.kotlinx_coroutines_core_js_version = "1.3.9"
 
     repositories {
         mavenLocal()
