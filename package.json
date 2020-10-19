@@ -4,7 +4,7 @@
   "description": "Desktop launcher for Projector, written in Kotlin, Electron and Node",
   "main": "",
   "scripts": {
-    "start":"npm run build && npm run run",
+    "start": "npm run build && npm run run",
     "build": "./gradlew build",
     "run": "cd ./build/js/packages/projector-launcher-electronapp && electron .",
     "gradle-node": "./gradlew -p electronapp jsNodeRun"
