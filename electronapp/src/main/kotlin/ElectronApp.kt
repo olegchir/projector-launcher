@@ -57,6 +57,9 @@ class ElectronApp(val url: String) {
                     override var webSecurity: Boolean?
                         get() = false
                         set(value) {}
+                    override var worldSafeExecuteJavaScript: Boolean?
+                        get() = true
+                        set(value) {}
                 }
                 set(value) {}
         })
@@ -146,6 +149,10 @@ class ElectronApp(val url: String) {
             this.serveStaticFiles()
             this.createWindow()
             this.registerGlobalShortcuts()
+
+            if (GlobalSettings.DEVELOPER_TOOLS_ENABLED) {
+                this.mainWindow.webContents.openDevTools();
+            }
         }
 
         app.on("web-contents-created", listener = { e: Event, contents: WebContents ->
