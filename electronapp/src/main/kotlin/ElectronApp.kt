@@ -1,5 +1,8 @@
+@file:Suppress("JSCODE_ARGUMENT_SHOULD_BE_CONSTANT")
+
 import Electron.*
 import kotlinext.js.jsObject
+import kotlinext.js.js
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.await
 import kotlinx.coroutines.launch
@@ -42,27 +45,21 @@ class ElectronApp(val url: String) {
     fun createWindow() {
         val workAreaSize = screen.getPrimaryDisplay().workAreaSize
 
-        this.mainWindow = BrowserWindow(object : BrowserWindowConstructorOptions {
-            override var width: Number?
-                get() = workAreaSize.width
-                set(value) {}
-            override var height: Number?
-                get() = workAreaSize.height
-                set(value) {}
-            override var webPreferences: WebPreferences?
-                get() = object : WebPreferences {
-                    override var nodeIntegration: Boolean?
-                        get() = true
-                        set(value) {}
-                    override var webSecurity: Boolean?
-                        get() = false
-                        set(value) {}
-                    override var worldSafeExecuteJavaScript: Boolean?
-                        get() = true
-                        set(value) {}
+        val windowOptions = """
+            function(width,height) {
+                return {  
+                    width: width,
+                    height: height,
+                    webPreferences: {
+                        nodeIntegration: true,
+                        webSecurity: false,
+                        worldSafeExecuteJavaScript: true
+                    }
                 }
-                set(value) {}
-        })
+            }
+        """
+
+        this.mainWindow = BrowserWindow(js(windowOptions)(workAreaSize.width, workAreaSize.height))
 
         this.mainWindow.webContents.on("did-navigate-in-page")
         { event: Event,
@@ -81,20 +78,7 @@ class ElectronApp(val url: String) {
             GlobalScope.launch(block = {
                 if (!that.initialized) {
                     if (!validatedURL.isNullOrBlank()) {
-                        dialog.showMessageBoxSync(that.mainWindow, object : MessageBoxSyncOptions {
-                            override var message: String
-                                get() = "Can't load the URL"
-                                set(value) {}
-                            override var detail: String?
-                                get() = validatedURL
-                                set(value) {}
-                            override var type: String?
-                                get() = "error"
-                                set(value) {}
-                            override var title: String?
-                                get() = "Invalid URL"
-                                set(value) {}
-                        })
+                        messageInvalidURL(validatedURL)
                     }
 
                     console.log("Can't load the URL: $validatedURL")
@@ -113,12 +97,39 @@ class ElectronApp(val url: String) {
         this.navigateMainWindow(url);
     }
 
+    fun messageInvalidURL(validatedURL: String) {
+        dialog.showMessageBoxSync(that.mainWindow, object : MessageBoxSyncOptions {
+            override var message: String
+                get() = "Can't load the URL"
+                set(value) {}
+            override var detail: String?
+                get() = validatedURL
+                set(value) {}
+            override var type: String?
+                get() = "error"
+                set(value) {}
+            override var title: String?
+                get() = "Invalid URL"
+                set(value) {}
+        })
+    }
+
     fun loadMessage(message: String) {
         GlobalScope.launch(block = {
             that.mainWindow.loadURL("about:blank").await()
             var html = "<body><h1>Invalid URL</h1><p>$message</p></body>"
             that.mainWindow.loadURL("data:text/html;charset=utf-8," + encodeURI(html)).await()
         })
+    }
+
+    fun testUrl(url: String): Boolean {
+        var result: Boolean = true;
+        try {
+            val newUrl = URL(url)
+        } catch (e: Throwable) {
+            result = false;
+        }
+        return result;
     }
 
     fun registerGlobalShortcuts() {
@@ -139,8 +150,6 @@ class ElectronApp(val url: String) {
             var url = request.url.substring(7)    /* all urls start with 'file://' */
             var normalUrl = if (node_fs.existsSync(url)) url else path.normalize("${__dirname}/${url}")
             callback(normalUrl)
-            //console.log("Intercepted url was: $url")
-            //console.log("Intercepted url transformed to: $normalUrl")
         })
     }
 
@@ -153,6 +162,10 @@ class ElectronApp(val url: String) {
             if (GlobalSettings.DEVELOPER_TOOLS_ENABLED) {
                 this.mainWindow.webContents.openDevTools();
             }
+        }
+
+        ipcMain.on("connect") { event, arg:dynamic ->
+            this.connect(arg)
         }
 
         app.on("web-contents-created", listener = { e: Event, contents: WebContents ->
@@ -169,6 +182,17 @@ class ElectronApp(val url: String) {
                 }
             })
         })
+    }
+
+    fun connect(newUrl: String, password: String? = null) {
+            if (!this.testUrl(newUrl)) {
+                messageInvalidURL(newUrl)
+            }
+            var fullUrl = "$newUrl&blockClosing=false&notSecureWarning=false";
+            if (!password.isNullOrBlank()) {
+                fullUrl += "&token=$password";
+            }
+            this.navigateMainWindow(fullUrl)
     }
 
     fun quitApp() {

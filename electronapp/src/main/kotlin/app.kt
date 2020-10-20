@@ -16,16 +16,3 @@ fun main(args: Array<String>) {
 fun commandLineArguments(): Array<String> {
     return process.argv as Array<String>;
 }
-
-fun testUrl(url: String): Boolean {
-    var result: Boolean = true;
-    try {
-        val newUrl = URL(url)
-    } catch (e: Throwable) {
-        result = false;
-    }
-    return result;
-}
-
-
-
