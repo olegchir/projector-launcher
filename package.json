@@ -8,9 +8,9 @@
     "build": "./gradlew build",
     "run": "cd ./build/js/packages/projector-launcher-electronapp && electron .",
     "gradle-node": "./gradlew -p electronapp jsNodeRun",
-    "package": "electron-packager --executable-name=projector --out=./out --overwrite --icon=./src/assets/img/electron-icon.ico ./build/js/packages/projector-launcher-electronapp",
-    "package-mac": "electron-packager --executable-name=projector --out=./out --overwrite --icon=./src/assets/img/electron-icon.icns  ./build/js/packages/projector-launcher-electronapp projector",
-    "copy-deps-mac": "ncp \"./build/js/node_modules\" \"./out/projector-darwin-x64/projector.app/Contents/Resources/app/node_modules\""
+    "packager": "electron-packager --executable-name=projector --out=./out --overwrite --icon=./electronapp/src/main/resources/assets/img/electron-icon.ico ./build/js/packages/projector-launcher-electronapp projector",
+    "copy-deps-mac": "ncp \"./build/js/node_modules\" \"./out/projector-darwin-x64/projector.app/Contents/Resources/app/node_modules\"",
+    "package-mac": "npm run packager && npm run copy-deps-mac"
   },
   "keywords": [
     "projector",
