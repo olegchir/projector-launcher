@@ -17,6 +17,7 @@ external fun encodeURI(data: String): String
 
 class ElectronApp(val url: String) {
     var that = this
+    var configData = js("{}")
 
     var path = require("path")
     var node_url = require("url")
@@ -46,20 +47,22 @@ class ElectronApp(val url: String) {
         val workAreaSize = screen.getPrimaryDisplay().workAreaSize
 
         val windowOptions = """
-            function(width,height) {
+            function(width,height,preloadPath) {
                 return {  
                     width: width,
                     height: height,
                     webPreferences: {
                         nodeIntegration: true,
                         webSecurity: false,
-                        worldSafeExecuteJavaScript: true
+                        worldSafeExecuteJavaScript: true,
+                        preload: preloadPath
                     }
                 }
             }
         """
 
-        this.mainWindow = BrowserWindow(js(windowOptions)(workAreaSize.width, workAreaSize.height))
+        var preloadPath = path.normalize(path.join(__dirname, "../assets/js/preload.js"))
+        this.mainWindow = BrowserWindow(js(windowOptions)(workAreaSize.width, workAreaSize.height, preloadPath))
 
         this.mainWindow.webContents.on("did-navigate-in-page")
         { event: Event,
@@ -144,18 +147,8 @@ class ElectronApp(val url: String) {
         };
     }
 
-    fun serveStaticFiles() {
-        // https://stackoverflow.com/questions/38204774/serving-static-files-in-electron-react-app
-        protocol.interceptFileProtocol("file", handler = { request, callback ->
-            var url = request.url.substring(7)    /* all urls start with 'file://' */
-            var normalUrl = if (node_fs.existsSync(url)) url else path.normalize("${__dirname}/${url}")
-            callback(normalUrl)
-        })
-    }
-
     fun registerApplicationLevelEvents() {
         app.whenReady().then {
-            this.serveStaticFiles()
             this.createWindow()
             this.registerGlobalShortcuts()
 
@@ -164,9 +157,24 @@ class ElectronApp(val url: String) {
             }
         }
 
-        ipcMain.on("connect") { event, arg:dynamic ->
+        ipcMain.on("projector-connect") { event, arg:dynamic ->
             this.connect(arg)
         }
+
+        ipcMain.on("projector-dom-ready") { event, arg:dynamic ->
+            registerGlobalShortcuts()
+
+            var defaultUrl = this.configData.defaultUrl
+            if (null != defaultUrl) {
+                event.sender.send("projector-set-url", defaultUrl);
+            }
+        }
+
+        app.on("window-all-closed", listenerFunction = {
+            if (!process.platform.equals("darwin")) {
+                quitApp()
+            }
+        })
 
         app.on("web-contents-created", listener = { e: Event, contents: WebContents ->
             contents.on("new-window", listener = { e: Event, url: String ->
@@ -185,14 +193,18 @@ class ElectronApp(val url: String) {
     }
 
     fun connect(newUrl: String, password: String? = null) {
-            if (!this.testUrl(newUrl)) {
-                messageInvalidURL(newUrl)
-            }
-            var fullUrl = "$newUrl&blockClosing=false&notSecureWarning=false";
-            if (!password.isNullOrBlank()) {
-                fullUrl += "&token=$password";
-            }
-            this.navigateMainWindow(fullUrl)
+        if (!this.testUrl(newUrl)) {
+            messageInvalidURL(newUrl)
+        }
+        val urlToAddOptions = URL(newUrl)
+        urlToAddOptions.searchParams.append("blockClosing", "false");
+        urlToAddOptions.searchParams.append("notSecureWarning", "false");
+        if (!password.isNullOrBlank()) {
+            urlToAddOptions.searchParams.append("token", password);
+        }
+        this.configData.defaultUrl = newUrl
+        this.savedb()
+        this.navigateMainWindow(urlToAddOptions.toString())
     }
 
     fun quitApp() {
@@ -200,6 +212,23 @@ class ElectronApp(val url: String) {
     }
 
     open fun start() {
+        loaddb()
         registerApplicationLevelEvents()
+    }
+
+    fun savedb() {
+        var data = JSON.stringify(this.configData);
+
+        if (!node_fs.existsSync(GlobalSettings.USER_CONFIG_DIR)){
+            node_fs.mkdirSync(GlobalSettings.USER_CONFIG_DIR);
+        }
+        node_fs.writeFileSync(GlobalSettings.USER_CONFIG_FILE, data);
+    }
+
+    fun loaddb() {
+        if (node_fs.existsSync(GlobalSettings.USER_CONFIG_FILE)) {
+            var buffer = node_fs.readFileSync(GlobalSettings.USER_CONFIG_FILE);
+            this.configData = JSON.parse(buffer.toString());
+        }
     }
 }

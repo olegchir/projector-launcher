@@ -2,12 +2,20 @@ import Electron.*
 external fun require(module: String): dynamic
 external val process: dynamic
 external val __dirname: dynamic
+external val JSON: dynamic
 
-external class URL(a: String)
+open external class URL(a: String) {
+    var searchParams: dynamic
+}
 
 fun main(args: Array<String>) {
     val argv = commandLineArguments();
-    val url = argv.last();
+    var url = argv.last();
+
+    if (url.endsWith("projector.exe")) {
+        url = ""
+    }
+
     console.log("URL: $url")
     val eapp = ElectronApp(url);
     eapp.start();
