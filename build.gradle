@@ -1,3 +1,5 @@
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+
 group 'com.jetbrains.projector'
 version '1.0.0'
 
@@ -22,5 +24,30 @@ subprojects { p ->
             jcenter()
             maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
         }
+    }
+}
+
+OperatingSystem os = DefaultNativePlatform.currentOperatingSystem;
+
+task distElectron(type:Exec) {
+    if (os.windows) {
+        commandLine 'cmd.exe', '/C', 'npm.cmd', 'run', 'packager'
+    } else {
+        commandLine 'npm', 'run', 'packager'
+    }
+}
+
+
+task dist(type:Exec) {
+    if (os.windows) {
+        dependsOn distElectron
+        commandLine 'cmd.exe', '/C', 'npm.cmd', 'run', 'copy-deps-mac'
+        commandLine 'cmd.exe', '/C', 'npm.cmd', 'run', 'copy-deps-win'
+        commandLine 'cmd.exe', '/C', 'npm.cmd', 'run', 'copy-deps-lin'
+    } else {
+        dependsOn distElectron
+        commandLine 'npm', 'run', 'copy-deps-mac'
+        commandLine 'npm', 'run', 'copy-deps-win'
+        commandLine 'npm', 'run', 'copy-deps-lin'
     }
 }
