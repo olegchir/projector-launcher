@@ -65,3 +65,7 @@ task copyResources {
 compileKotlinJs.doLast {
     tasks.copyResources
 }
+
+kotlinNodeJs {
+    download = false
+}
