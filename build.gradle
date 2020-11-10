@@ -38,16 +38,18 @@ task distElectron(type:Exec) {
 }
 
 
-task dist(type:Exec) {
-    if (os.windows) {
-        dependsOn distElectron
-        commandLine 'cmd.exe', '/C', 'npm.cmd', 'run', 'copy-deps-mac'
-        commandLine 'cmd.exe', '/C', 'npm.cmd', 'run', 'copy-deps-win'
-        commandLine 'cmd.exe', '/C', 'npm.cmd', 'run', 'copy-deps-lin'
-    } else {
-        dependsOn distElectron
-        commandLine 'npm', 'run', 'copy-deps-mac'
-        commandLine 'npm', 'run', 'copy-deps-win'
-        commandLine 'npm', 'run', 'copy-deps-lin'
+task dist {
+    dependsOn distElectron
+
+    doLast {
+        if (os.windows) {
+            exec { commandLine 'cmd.exe', '/C', 'npm.cmd', 'run', 'copy-deps-mac' }
+            exec { commandLine 'cmd.exe', '/C', 'npm.cmd', 'run', 'copy-deps-win' }
+            exec { commandLine 'cmd.exe', '/C', 'npm.cmd', 'run', 'copy-deps-lin' }
+        } else {
+            exec { commandLine 'npm', 'run', 'copy-deps-mac' }
+            exec { commandLine 'npm', 'run', 'copy-deps-win' }
+            exec { commandLine 'npm', 'run', 'copy-deps-lin' }
+        }
     }
 }
