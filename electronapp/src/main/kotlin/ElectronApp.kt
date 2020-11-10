@@ -8,11 +8,6 @@ import kotlinx.coroutines.await
 import kotlinx.coroutines.launch
 import kotlin.js.json
 
-//import kotlin.coroutines.CoroutineContext
-//suspend fun <T> Promise<T>.await(): T = suspendCoroutine { cont ->
-//    then({ cont.resume(it) }, { cont.resumeWithException(it) })
-//}
-
 external fun encodeURI(data: String): String
 
 class ElectronApp(val url: String) {
